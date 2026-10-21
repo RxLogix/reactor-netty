@@ -57,7 +57,7 @@ final class HAProxyMessageReader extends ChannelInboundHandlerAdapter {
 	@Nullable
 	static SocketAddress resolveRemoteAddressFromProxyProtocol(Channel channel) {
 		if (HAProxyMessageReader.isProxyProtocolAvailable()) {
-			return channel.attr(REMOTE_ADDRESS_FROM_PROXY_PROTOCOL).getAndSet(null);
+			return channel.attr(REMOTE_ADDRESS_FROM_PROXY_PROTOCOL).get();
 		}
 
 		return null;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2024 VMware, Inc. or its affiliates, All Rights Reserved.
+ * Copyright (c) 2017-2026 VMware, Inc. or its affiliates, All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,14 @@ final class HttpServerBind extends HttpServer {
 						"Configured HTTP/3 protocol without TLS. Configure TLS via HttpServer#secure"));
 			}
 		}
+
+		if ((config._protocols & HttpServerConfig.h3) == HttpServerConfig.h3 &&
+				config.proxyProtocolSupportType() != ProxyProtocolSupportType.OFF) {
+			return Mono.error(new UnsupportedOperationException(
+					"proxyProtocol is not supported for HTTP/3 protocol. " +
+							"The HAProxy proxy protocol is only supported for TCP-based protocols (HTTP/1.1 and HTTP/2)."));
+		}
+
 		return super.bind();
 	}
 

@@ -593,26 +593,6 @@ class HttpClientConnect extends HttpClient {
 				}
 
 				ch.listener().onStateChange(ch, HttpClientState.REQUEST_PREPARED);
-				if (websocketClientSpec != null) {
-					// ReferenceEquality is deliberate
-					if (ch.version == H2) {
-						Long value = ch.channel().parent().attr(ENABLE_CONNECT_PROTOCOL).get();
-						if (value == null) {
-							throw new WebSocketClientHandshakeException("Websocket is not supported by the server. " +
-									"Missing SETTINGS_ENABLE_CONNECT_PROTOCOL(0x8).");
-						}
-						if (FALSE.equals(value)) {
-							throw new WebSocketClientHandshakeException("Websocket is not supported by the server. " +
-									"[SETTINGS_ENABLE_CONNECT_PROTOCOL(0x8)=0] was received.");
-						}
-					}
-					Mono<Void> result =
-							Mono.fromRunnable(() -> ch.withWebsocketSupport(websocketClientSpec));
-					if (handler != null) {
-						result = result.thenEmpty(Mono.fromRunnable(() -> Flux.concat(handler.apply(ch, ch))));
-					}
-					return result;
-				}
 
 				Consumer<HttpClientRequest> consumer = null;
 				if (fromURI != null && (!toURI.equals(fromURI) || (fromURI.isSecure() && !toURI.isSecure()))) {
@@ -641,6 +621,28 @@ class HttpClientConnect extends HttpClient {
 				}
 
 				ch.redirectRequestConsumer(consumer);
+
+				if (websocketClientSpec != null) {
+					// ReferenceEquality is deliberate
+					if (ch.version == H2) {
+						Long value = ch.channel().parent().attr(ENABLE_CONNECT_PROTOCOL).get();
+						if (value == null) {
+							throw new WebSocketClientHandshakeException("Websocket is not supported by the server. " +
+									"Missing SETTINGS_ENABLE_CONNECT_PROTOCOL(0x8).");
+						}
+						if (FALSE.equals(value)) {
+							throw new WebSocketClientHandshakeException("Websocket is not supported by the server. " +
+									"[SETTINGS_ENABLE_CONNECT_PROTOCOL(0x8)=0] was received.");
+						}
+					}
+					Mono<Void> result =
+							Mono.fromRunnable(() -> ch.withWebsocketSupport(websocketClientSpec));
+					if (handler != null) {
+						result = result.thenEmpty(Mono.fromRunnable(() -> Flux.concat(handler.apply(ch, ch))));
+					}
+					return result;
+				}
+
 				if (handler != null) {
 					Publisher<Void> publisher = handler.apply(ch, ch);
 					return ch.equals(publisher) ? ch.send() : publisher;
